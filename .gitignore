@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+*.pot
+*.py[cod]
+*.egg-info/
+*.egg/
+*.idea/
+*.vscode/
+*.DS_Store
