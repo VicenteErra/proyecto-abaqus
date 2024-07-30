@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Comparar Portafolios</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  </head>
+  <body>
+    <h1>Comparar Portafolios</h1>
+
+    <form method="GET">
+      <label for="fecha_inicio">Fecha Inicio:</label>
+      <input type="date" name="start_date" required />
+
+      <label for="fecha_fin">Fecha Fin:</label>
+      <input type="date" name="end_date" required />
+
+      <button type="submit">Comparar</button>
+    </form>
+
+    {% if error %}
+    <p style="color: red">{{ error }}</p>
+    {% endif %}
+
+    <h2>Evolución de los Pesos de los Activos</h2>
+    <div>{{ weights_graph|safe }}</div>
+
+    <h2>Evolución del Valor de los Portafolios</h2>
+    <div>{{ values_graph|safe }}</div>
+  </body>
+</html>

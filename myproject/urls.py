@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from portfolio.views import PortfolioDataAPIView
+from portfolio.views import PortfolioDataAPIView, compare_portfolios
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('portfolio-data/', PortfolioDataAPIView.as_view(), name='portfolio-data'),
+    path('compare/', compare_portfolios, name='compare_portfolios'),
 ]

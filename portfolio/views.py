@@ -7,6 +7,8 @@ from portfolio.models import Portfolio, Asset, Price, Quantity
 from django.db.models import Sum, F
 from decimal import Decimal
 import datetime
+import requests
+import plotly.graph_objects as go
 
 class PortfolioDataAPIView(APIView):
     def get(self, request):
@@ -77,3 +79,76 @@ class PortfolioDataAPIView(APIView):
         x_i_t = quantity.quantity * price.value if price else 0
         return x_i_t / V_t if V_t != 0 else 0
 
+
+def compare_portfolios(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if not start_date or not end_date:
+        return render(request, 'compare.html', {'error': 'Debe proporcionar fecha_inicioo y fecha_fin'})
+
+    # Llamar a la API
+    response = requests.get(f'http://localhost:8000/portfolio-data?start_date={start_date}&end_date={end_date}')
+    data = response.json()
+    
+    # Preparar los datos para los gráficos
+    dates = []
+    weights_data = {}
+    values_data = {}
+    
+    for portfolio in data:
+        portfolio_id = portfolio['portfolio']
+        for entry in portfolio['data']:
+            dates.append(entry['date'])
+            V_t = entry['V_t']
+            if portfolio['portfolio'] not in values_data:
+                values_data[portfolio['portfolio']] = []
+            values_data[portfolio['portfolio']].append(V_t)
+            
+            for weight in entry['weights']:
+                asset = weight['asset']
+                if asset not in weights_data:
+                    weights_data[asset] = []
+                weights_data[asset].append(weight['weight'])
+    
+    # Crear gráfico de áreas apiladas para los pesos
+    fig_weights = go.Figure()
+    
+    for asset, weights in weights_data.items():
+        fig_weights.add_trace(go.Scatter(
+            x=dates,
+            y=weights,
+            mode='lines+markers',
+            name=asset,
+            stackgroup='one'  # Áreas apiladas
+        ))
+    
+    fig_weights.update_layout(title='Evolución de los Pesos de los Activos',
+                               xaxis_title='Fecha',
+                               yaxis_title='Peso',
+                               hovermode='x unified')
+    
+    # Crear gráfico de líneas para V_t
+    fig_values = go.Figure()
+    
+    for portfolio, values in values_data.items():
+        fig_values.add_trace(go.Scatter(
+            x=dates,
+            y=values,
+            mode='lines+markers',
+            name=portfolio
+        ))
+    
+    fig_values.update_layout(title='Evolución del Valor de los Portafolios',
+                              xaxis_title='Fecha',
+                              yaxis_title='Valor ($)',
+                              hovermode='x unified')
+
+    # Convertir figuras a HTML
+    weights_graph = fig_weights.to_html(full_html=False)
+    values_graph = fig_values.to_html(full_html=False)
+    
+    return render(request, 'compare.html', {
+        'weights_graph': weights_graph,
+        'values_graph': values_graph
+    })
